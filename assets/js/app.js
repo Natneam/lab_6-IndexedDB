@@ -6,6 +6,7 @@ const taskList = document.querySelector('.collection'); //The UL
 const clearBtn = document.querySelector('.clear-tasks'); //the all task clear button
 
 const reloadIcon = document.querySelector('.fa'); //the reload button at the top navigation 
+let sortBy = document.querySelector('#sortby');
 
 //DB variable 
 
@@ -13,6 +14,44 @@ let DB;
 let taskObjects = Array();
 
 
+
+function paintUI(taskObjectsL, ascending=true){
+    taskList.innerText = '';
+    for (value in taskObjectsL){
+        if (ascending === false){
+            value = taskObjectsL.length - value - 1
+        }
+        // Create an li element when the user adds a task 
+        const li = document.createElement('li');
+        //add Attribute for delete 
+        li.setAttribute('data-task-id', taskObjectsL[value]['id']);
+        // Adding a class
+        li.className = 'collection-item row';
+        // Create text node and append it 
+        const text = document.createElement('div')
+        text.innerText = taskObjectsL[value]['taskname']
+        text.className = "col s5"
+        li.appendChild(text);
+        //create date and append to li
+        const date = document.createElement('div');
+        date.className = "col s5"
+        date.innerText = `${taskObjectsL[value]['date'][2]} - ${taskObjectsL[value]['date'][1]} - ${taskObjectsL[value]['date'][0]}  ${taskObjectsL[value]['date'][3]}:${taskObjectsL[value]['date'][4]}:${taskObjectsL[value]['date'][5]}`;
+        li.appendChild(date)
+        // Create new element for the link 
+        const link = document.createElement('a');
+        // Add class and the x marker for a 
+        link.className = 'delete-item secondary-content col s1';
+        link.innerHTML = `
+        <i class="fa fa-remove"></i>
+        &nbsp;
+        <a href="../edit.html?id=${taskObjectsL[value]['id']}"><i class="fa fa-edit"></i> </a>
+        `;
+        // Append link to li
+        li.appendChild(link);
+        // Append to UL 
+        taskList.appendChild(li);
+    }
+}
 
 // Add Event Listener [on Load]
 document.addEventListener('DOMContentLoaded', () => {
@@ -62,8 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // create a new object with the form info
         let newTask = {
+            time : Date.now(),
             taskname: taskInput.value,
-            date : [(new Date()).getFullYear(), (new Date()).getMonth(), (new Date()).getDate(), (new Date()).getHours(), (new Date()).getMinutes(),(new Date()).getSeconds(), Date.now()]
+            date : [(new Date()).getFullYear(), (new Date()).getMonth(), (new Date()).getDate(), (new Date()).getHours(), (new Date()).getMinutes(),(new Date()).getSeconds()]
         }
 
         // Insert the object into the database 
@@ -103,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // console.log(taskObjects)
                 cursor.continue();
             }
-            paintUI(taskObjects);
+            paintUI(taskObjects, sortBy.value=='ascending'?true:false);
         }
     }
 
@@ -120,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let transaction = DB.transaction(['tasks'], 'readwrite');
                 let objectStore = transaction.objectStore('tasks');
                 objectStore.delete(taskID);
-
+                displayTaskList();
                 transaction.oncomplete = () => {
                     e.target.parentElement.parentElement.remove();
                 }
@@ -144,52 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayTaskList();
         console.log("Tasks Cleared !!!");
     }
-
-
-    function paintUI(taskObjects, ascending=true){
-        taskList.innerText = '';
-        console.log(taskObjects);
-        taskObjects = reOrder(taskObjects, true);
-        console.log(taskObjects);
-        for (value of taskObjects){
-            // Create an li element when the user adds a task 
-            const li = document.createElement('li');
-            //add Attribute for delete 
-            li.setAttribute('data-task-id', value['id']);
-            // Adding a class
-            li.className = 'collection-item row';
-            // Create text node and append it 
-            const text = document.createElement('div')
-            text.innerText = value['taskname']
-            text.className = "col s5"
-            li.appendChild(text);
-            //create date and append to li
-            const date = document.createElement('div');
-            date.className = "col s5"
-            date.innerText = `${value['date'][2]} - ${value['date'][1]} - ${value['date'][0]}  ${value['date'][3]}:${value['date'][4]}:${value['date'][5]}`;
-            li.appendChild(date)
-            // Create new element for the link 
-            const link = document.createElement('a');
-            // Add class and the x marker for a 
-            link.className = 'delete-item secondary-content col s1';
-            link.innerHTML = `
-            <i class="fa fa-remove"></i>
-            &nbsp;
-            <a href="/assets/js/edit.html?id=${value['id']}"><i class="fa fa-edit"></i> </a>
-            `;
-            // Append link to li
-            li.appendChild(link);
-            // Append to UL 
-            taskList.appendChild(li);
-        }
-    }
-
-    function reOrder(arr, ascending=true) {
-        if (ascending === true){
-            arr.sort((a,b)=> {a['date'][6]-b['date'][6]})
-        }else{
-            arr.sort((a,b)=> {b['date'][6]-a['date'][6]})
-        }
-        return arr
-    }
 });
+
+//updating ui every time the order by drop down changed
+sortBy.addEventListener('change', ()=>{paintUI(taskObjects, sortBy.value=='ascending'?true:false)});
