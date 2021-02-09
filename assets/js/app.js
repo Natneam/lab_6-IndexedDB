@@ -10,6 +10,7 @@ const reloadIcon = document.querySelector('.fa'); //the reload button at the top
 //DB variable 
 
 let DB;
+let taskObjects = Array();
 
 
 
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // create a new object with the form info
         let newTask = {
             taskname: taskInput.value,
+            date : [(new Date()).getFullYear(), (new Date()).getMonth(), (new Date()).getDate(), (new Date()).getHours(), (new Date()).getMinutes(),(new Date()).getSeconds(), Date.now()]
         }
 
         // Insert the object into the database 
@@ -86,42 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function displayTaskList() {
         // clear the previous task list
+        taskObjects = []
         while (taskList.firstChild) {
             taskList.removeChild(taskList.firstChild);
         }
 
         // create the object store
         let objectStore = DB.transaction('tasks').objectStore('tasks');
-
         objectStore.openCursor().onsuccess = function(e) {
             // assign the current cursor
             let cursor = e.target.result;
-
             if (cursor) {
-
-                // Create an li element when the user adds a task 
-                const li = document.createElement('li');
-                //add Attribute for delete 
-                li.setAttribute('data-task-id', cursor.value.id);
-                // Adding a class
-                li.className = 'collection-item';
-                // Create text node and append it 
-                li.appendChild(document.createTextNode(cursor.value.taskname));
-                // Create new element for the link 
-                const link = document.createElement('a');
-                // Add class and the x marker for a 
-                link.className = 'delete-item secondary-content';
-                link.innerHTML = `
-                 <i class="fa fa-remove"></i>
-                &nbsp;
-                <a href="/Lesson 04 [Lab 06]/Finished/edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
-                `;
-                // Append link to li
-                li.appendChild(link);
-                // Append to UL 
-                taskList.appendChild(li);
+                taskObjects.push(cursor.value)
+                // console.log(taskObjects)
                 cursor.continue();
             }
+            paintUI(taskObjects);
         }
     }
 
@@ -158,9 +140,56 @@ document.addEventListener('DOMContentLoaded', () => {
         let tasks = transaction.objectStore("tasks");
         // clear the table.
         tasks.clear();
+        taskObjects = []
         displayTaskList();
         console.log("Tasks Cleared !!!");
     }
 
 
+    function paintUI(taskObjects, ascending=true){
+        taskList.innerText = '';
+        console.log(taskObjects);
+        taskObjects = reOrder(taskObjects, true);
+        console.log(taskObjects);
+        for (value of taskObjects){
+            // Create an li element when the user adds a task 
+            const li = document.createElement('li');
+            //add Attribute for delete 
+            li.setAttribute('data-task-id', value['id']);
+            // Adding a class
+            li.className = 'collection-item row';
+            // Create text node and append it 
+            const text = document.createElement('div')
+            text.innerText = value['taskname']
+            text.className = "col s5"
+            li.appendChild(text);
+            //create date and append to li
+            const date = document.createElement('div');
+            date.className = "col s5"
+            date.innerText = `${value['date'][2]} - ${value['date'][1]} - ${value['date'][0]}  ${value['date'][3]}:${value['date'][4]}:${value['date'][5]}`;
+            li.appendChild(date)
+            // Create new element for the link 
+            const link = document.createElement('a');
+            // Add class and the x marker for a 
+            link.className = 'delete-item secondary-content col s1';
+            link.innerHTML = `
+            <i class="fa fa-remove"></i>
+            &nbsp;
+            <a href="/assets/js/edit.html?id=${value['id']}"><i class="fa fa-edit"></i> </a>
+            `;
+            // Append link to li
+            li.appendChild(link);
+            // Append to UL 
+            taskList.appendChild(li);
+        }
+    }
+
+    function reOrder(arr, ascending=true) {
+        if (ascending === true){
+            arr.sort((a,b)=> {a['date'][6]-b['date'][6]})
+        }else{
+            arr.sort((a,b)=> {b['date'][6]-a['date'][6]})
+        }
+        return arr
+    }
 });

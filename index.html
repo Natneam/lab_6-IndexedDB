@@ -56,7 +56,13 @@
                     </div>
                 </div>
                 <div class="card-action">
-                    <h5 id="task-title">List of Tasks</h5>
+                    <div class="task-title row">
+                        <h5 class="col s9">List of Tasks</h5>            
+                        <select class="browser-default col s3" id="sortby">
+                            <option value="ascending" selected>Ascending</option>
+                            <option value="descending">Descending</option>
+                        </select>
+                    </div>
                     <div class="input-field col s12">
                         <input type="search" name="filter" id="filter">
                         <label for="filter">Search</label>
