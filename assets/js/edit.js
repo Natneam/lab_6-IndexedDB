@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check empty entry
         if (taskInput.value === '') {
             taskInput.style.borderColor = "red";
-
             return;
         }
 
@@ -72,7 +71,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
         */
 
-        history.back();
+       var transaction = DB.transaction(['tasks'], 'readwrite');
+       var objectStore = transaction.objectStore('tasks');
+       var request = objectStore.get(id);
+
+       request.onsuccess = function(event) {
+           if (request.result) {
+               let v = request.result
+               v.taskname = taskInput.value;
+               console.log(v)
+               objectStore.put(v);
+           }
+           history.back();
+       };
+        
     }
 
 
